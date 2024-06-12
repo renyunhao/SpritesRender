@@ -18,7 +18,6 @@ rollout spritesRender "3渲2助手1.0.0 作者：RenYunhao"
 
 	local directionDigit = 0
 	local frameDigit = 0
-	local activated = false
 	
 	function CameraFilter obj = (isKindOf obj camera)
 	
@@ -47,18 +46,6 @@ rollout spritesRender "3渲2助手1.0.0 作者：RenYunhao"
 		button btnRender "开始渲染" width:buttonWidth height:buttonHeight enabled:false 
 		label lblTip "!!!渲染参数是当前的渲染输出设置!!!" align:#center
 	)
-
-	-- MSE加密已经被破解，就不搞联网激活恶心人了，免费给大家用
-	-- group "激活"
-	-- (
-	-- 	label lblUUIDTip "UUID:"
-	-- 	label lblUUID ""
-	-- 	button btnCopyUUID "复制UUID" width:buttonWidth height:buttonHeight
-	-- 	label lblActivateText "激活码"
-	-- 	edittext edtActivateText text:""
-	-- 	button btnActivate "激活" width:buttonWidth height:buttonHeight enabled:false
-	-- 	label lblActivateTip "!!!一次激活，终生使用，无需联网!!!"
-	-- )
 	
 	function RenderFrame frameIndex =
 	(
@@ -137,12 +124,6 @@ rollout spritesRender "3渲2助手1.0.0 作者：RenYunhao"
 
 	on btnRender pressed do
 	(
-		if activated == false then
-		(
-			messageBox "未激活"
-			return()
-		)
-
 		animButtonState = false
 	    local nameBak = RendOutPutFileName
 		local rotBak = Root.rotation	
@@ -293,139 +274,11 @@ rollout spritesRender "3渲2助手1.0.0 作者：RenYunhao"
 		lblActiveFrameRange.text = (animationRange.start.frame as integer) as string + " - " + (animationRange.end.frame as integer) as string
 	)
 
-	function GetUUID = 
-	(
-		-- 创建 ManagementObjectSearcher 对象
-		local searcher = dotNetObject "System.Management.ManagementObjectSearcher" "SELECT * FROM Win32_ComputerSystemProduct"
-
-		-- 执行查询
-		local collection = searcher.Get()
-		local enumerator = collection.GetEnumerator()
-
-		if enumerator.MoveNext() then
-		(
-			local uuid = enumerator.Current.GetPropertyValue "UUID"
-			return uuid
-		)
-
-		return ""
-	)
-
-	-- 定义函数来计算MD5哈希值
-	function calculateMD5Hash inputString =
-	(
-		MD5 = dotNetClass "System.Security.Cryptography.MD5"
-		encoding = dotNetClass "System.Text.UTF8Encoding"
-	
-		-- 将输入字符串转换为字节数组
-		bytes = encoding.UTF8.GetBytes inputString
-		
-		-- 创建MD5实例
-		calculator = MD5.Create()
-		
-		-- 计算MD5哈希值
-		hashBytes = calculator.ComputeHash bytes
-		
-		-- 将哈希值转换为十六进制字符串
-		hashStringBuilder = dotNetObject "System.Text.StringBuilder"
-		for c in hashBytes do
-		(
-			hashStringBuilder.Append(formattedPrint c format:"02x")
-		)
-		return hashStringBuilder.ToString()
-	)
-
-	function LoadActivateCode =
-	(
-		local savePath = getDir #userScripts
-		file = openFile (savePath + "/SpritesRenderActivateCode.txt")
-		if (file != undefined) then
-		(
-			local code = (readLine file)
-			close file
-			return code
-		)
-		else
-		(
-			return ""
-		)
-	)
-
-	function RefreshActivateState =
-	(
-		if (activated) then
-		(
-			edtActivateText.enabled = false
-			edtActivateText.text = "已激活"
-		)
-		else
-		(
-			edtActivateText.text = "请输入激活码"
-		)
-	)
-
-	function CheckIsActivated =
-	(
-		local uuid = GetUUID()
-		lblUUID.text = uuid
-		local code = LoadActivateCode()
-		if (code.count > 0) then
-		(
-			local activateCode = calculateMD5Hash lblUUID.text
-			activated = activateCode == code
-		)
-		else
-		(
-			activated = false
-		)
-		RefreshActivateState()
-	)
-
-	function SaveActivateCodeToFile activateCode =
-	(
-		local savePath = getDir #userScripts
-		file = createFile (savePath + "/SpritesRenderActivateCode.txt")
-
-		format activateCode to: file
-		close file
-	)
-
 	on spritesRender open do
 	(
 		updateTimeRange()
-		-- CheckIsActivated()
-	)
-
-	on btnCopyUUID pressed do
-	(
-		setclipboardText lblUUID.text
-	)
-
-	on edtActivateText changed newText do
-	(
-		btnActivate.enabled = newText.count > 0
-	)
-
-	on btnActivate pressed do
-	(
-		local activateCode = calculateMD5Hash (lblUUID.text + "-made by renyunhao")
-		if (activateCode == edtActivateText.text) then
-		(
-			activated = true
-			SaveActivateCodeToFile activateCode
-			RefreshActivateState()
-			messageBox "激活成功"
-		)
-		else
-		(
-			activated = false
-			messageBox "激活失败"
-		)
 	)
 )
-
-dotNet.loadAssembly "System"
-dotNet.loadAssembly "System.Management"
 
 createDialog spritesRender panelWidth 370
 
